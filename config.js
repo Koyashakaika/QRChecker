@@ -3,5 +3,5 @@
 window.APP_CONFIG = {
   SUPABASE_URL: "https://sazejlxxoosxfpthcjmf.supabase.co/rest/v1/",
   SUPABASE_ANON_KEY: "sb_publishable_The2YvnZbEmEKl3UNm1ung_RlrzbK7K",
-  APP_URL: "https://github.com/Koyashakaika/QRChecker/"
+  APP_URL: "https://koyashakaika.github.io/QRChecker/"
 };

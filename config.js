@@ -1,7 +1,7 @@
 // このファイルを config.js にリネームして、Supabaseを使う場合だけ値を入れてください。
 // 空欄のままならブラウザ内保存モードで動きます。
 window.APP_CONFIG = {
-  SUPABASE_URL: '',
-  SUPABASE_ANON_KEY: '',
-  APP_URL: ''
+  SUPABASE_URL: "https://sazejlxxoosxfpthcjmf.supabase.co/rest/v1/",
+  SUPABASE_ANON_KEY: "sb_publishable_The2YvnZbEmEKl3UNm1ung_RlrzbK7K",
+  APP_URL: "https://github.com/Koyashakaika/QRChecker/"
 };

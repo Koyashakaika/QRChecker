@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>物品QRチェック（v6・QR個別生成修正版）</title>
+<title>物品QRチェック（v7・QRローカル生成修正版）</title>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{--bg:#f6f7f9;--card:#fff;--ink:#17202a;--muted:#65748b;--line:#d9dee8;--brand:#1f5fbf;--danger:#b42318;--ok:#067647}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}header{background:#102a43;color:white;padding:18px 16px}header h1{font-size:22px;margin:0 0 4px}main{max-width:1180px;margin:0 auto;padding:16px}.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 1px 4px #0001}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.stack{display:grid;gap:8px}label{font-weight:700;font-size:13px}input,textarea,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-size:16px;background:white}button{border:0;border-radius:10px;background:var(--brand);color:white;padding:10px 13px;font-weight:700;cursor:pointer}button.secondary{background:#475569}button.light{background:#e9eef8;color:#16325c}button.danger{background:var(--danger)}button.ok{background:var(--ok)}button:disabled{opacity:.55}.muted{color:var(--muted);font-size:13px}.pill{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;background:#e9eef8}.pill.ok{background:#dcfae6;color:#065f46}.pill.warn{background:#fff4cc;color:#7a5200}.tableWrap{overflow:auto;max-height:430px;border:1px solid var(--line);border-radius:12px}table{border-collapse:collapse;width:100%;background:#fff}th,td{border-bottom:1px solid var(--line);padding:9px;text-align:left;font-size:14px;vertical-align:top}th{position:sticky;top:0;background:#edf2f7;z-index:1}tr:hover{background:#f8fbff}.scanBox{border:2px dashed var(--line);border-radius:14px;padding:18px;text-align:center}.big{font-size:22px;font-weight:800}.labelPage{width:297mm;height:210mm;padding:10mm 10.5mm;background:white;break-after:page;page-break-after:always}.labelPage:last-child{break-after:auto;page-break-after:auto}.qrGrid{display:grid;grid-template-columns:repeat(4,69mm);grid-template-rows:repeat(5,38mm);gap:0;justify-content:start;align-content:start;background:white}.label{width:69mm;height:38mm;border:.2mm dashed #bbb;padding:1.6mm;text-align:center;display:grid;grid-template-columns:17mm 1fr;gap:1.8mm;align-items:center;break-inside:avoid;page-break-inside:avoid;background:white;overflow:hidden}.label img.qr{width:16.5mm!important;height:16.5mm!important;display:block}.label .text{min-width:0;text-align:left;line-height:1.15}.label .code{font-size:12pt;font-weight:800;margin:0 0 .8mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.label .name{font-size:10pt;font-weight:800;max-height:11.5mm;overflow:hidden}.label .loc{font-size:8pt;color:#333;max-height:7mm;overflow:hidden}.hide{display:none!important}.modalBack{position:fixed;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;z-index:99}.modal{background:white;border-radius:16px;padding:18px;max-width:520px;width:calc(100% - 32px);box-shadow:0 10px 30px #0005}.modal h3{margin-top:0}.checkCell{width:34px;text-align:center}@media(max-width:850px){.grid{grid-template-columns:1fr}.qrGrid{grid-template-columns:1fr 1fr}}@media print{@page{size:A4 landscape;margin:0}html,body{width:297mm;background:white}header,.noPrint,.card:not(.printArea){display:none!important}main{padding:0;max-width:none}.printArea{display:block!important;border:0!important;box-shadow:none!important;margin:0!important;padding:0!important;border-radius:0!important;width:297mm;background:white}.labelPage{width:297mm;height:210mm;padding:10mm 10.5mm;overflow:hidden}.qrGrid{grid-template-columns:repeat(4,69mm);grid-template-rows:repeat(5,38mm);gap:0;justify-content:start;align-content:start}.label{border:.15mm solid #ddd;width:69mm;height:38mm;margin:0;page-break-inside:avoid;break-inside:avoid}.label img.qr{width:16.5mm!important;height:16.5mm!important}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}header{background:#102a43;color:white;padding:18px 16px}header h1{font-size:22px;margin:0 0 4px}main{max-width:1180px;margin:0 auto;padding:16px}.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 1px 4px #0001}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.stack{display:grid;gap:8px}label{font-weight:700;font-size:13px}input,textarea,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-size:16px;background:white}button{border:0;border-radius:10px;background:var(--brand);color:white;padding:10px 13px;font-weight:700;cursor:pointer}button.secondary{background:#475569}button.light{background:#e9eef8;color:#16325c}button.danger{background:var(--danger)}button.ok{background:var(--ok)}button:disabled{opacity:.55}.muted{color:var(--muted);font-size:13px}.pill{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;background:#e9eef8}.pill.ok{background:#dcfae6;color:#065f46}.pill.warn{background:#fff4cc;color:#7a5200}.tableWrap{overflow:auto;max-height:430px;border:1px solid var(--line);border-radius:12px}table{border-collapse:collapse;width:100%;background:#fff}th,td{border-bottom:1px solid var(--line);padding:9px;text-align:left;font-size:14px;vertical-align:top}th{position:sticky;top:0;background:#edf2f7;z-index:1}tr:hover{background:#f8fbff}.scanBox{border:2px dashed var(--line);border-radius:14px;padding:18px;text-align:center}.big{font-size:22px;font-weight:800}.labelPage{width:297mm;height:210mm;padding:10mm 10.5mm;background:white;break-after:page;page-break-after:always}.labelPage:last-child{break-after:auto;page-break-after:auto}.qrGrid{display:grid;grid-template-columns:repeat(4,69mm);grid-template-rows:repeat(5,38mm);gap:0;justify-content:start;align-content:start;background:white}.label{width:69mm;height:38mm;border:.2mm dashed #bbb;padding:1.6mm;text-align:center;display:grid;grid-template-columns:17mm 1fr;gap:1.8mm;align-items:center;break-inside:avoid;page-break-inside:avoid;background:white;overflow:hidden}.label .qrBox{width:16.5mm!important;height:16.5mm!important;display:flex;align-items:center;justify-content:center}.label .qrBox canvas,.label .qrBox img{width:16.5mm!important;height:16.5mm!important;display:block}.label .text{min-width:0;text-align:left;line-height:1.15}.label .code{font-size:12pt;font-weight:800;margin:0 0 .8mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.label .name{font-size:10pt;font-weight:800;max-height:11.5mm;overflow:hidden}.label .loc{font-size:8pt;color:#333;max-height:7mm;overflow:hidden}.hide{display:none!important}.modalBack{position:fixed;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;z-index:99}.modal{background:white;border-radius:16px;padding:18px;max-width:520px;width:calc(100% - 32px);box-shadow:0 10px 30px #0005}.modal h3{margin-top:0}.checkCell{width:34px;text-align:center}@media(max-width:850px){.grid{grid-template-columns:1fr}.qrGrid{grid-template-columns:1fr 1fr}}@media print{@page{size:A4 landscape;margin:0}html,body{width:297mm;background:white}header,.noPrint,.card:not(.printArea){display:none!important}main{padding:0;max-width:none}.printArea{display:block!important;border:0!important;box-shadow:none!important;margin:0!important;padding:0!important;border-radius:0!important;width:297mm;background:white}.labelPage{width:297mm;height:210mm;padding:10mm 10.5mm;overflow:hidden}.qrGrid{grid-template-columns:repeat(4,69mm);grid-template-rows:repeat(5,38mm);gap:0;justify-content:start;align-content:start}.label{border:.15mm solid #ddd;width:69mm;height:38mm;margin:0;page-break-inside:avoid;break-inside:avoid}.label .qrBox,.label .qrBox canvas,.label .qrBox img{width:16.5mm!important;height:16.5mm!important}}
 </style>
 </head>
 <body>
@@ -138,15 +139,29 @@ function qrUrl(code){
   return u.toString();
 }
 function qrImageSrc(code){
+  // QRCode.jsが読み込めない場合だけ使う予備の外部画像URL。
   const data=qrUrl(code);
   const p=new URLSearchParams();
   p.set('size','220x220');
   p.set('margin','6');
-  p.set('format','svg');
+  p.set('format','png');
   p.set('data',data);
-  // 画像キャッシュで別物品が同じ画像になるのを避ける。
-  p.set('t',String(code)+'_'+Date.now()+'_'+Math.random().toString(36).slice(2));
+  p.set('cache_bust',String(code)+'_'+Date.now()+'_'+Math.random().toString(36).slice(2));
   return 'https://api.qrserver.com/v1/create-qr-code/?'+p.toString();
+}
+function renderQrBox(box, code){
+  const data=qrUrl(code);
+  box.innerHTML='';
+  box.setAttribute('data-code', String(code));
+  box.setAttribute('data-qr-data', data);
+  if(window.QRCode){
+    new QRCode(box, { text:data, width:96, height:96, correctLevel:QRCode.CorrectLevel.M });
+    return;
+  }
+  const img=document.createElement('img');
+  img.alt='QR '+String(code);
+  img.src=qrImageSrc(code);
+  box.appendChild(img);
 }
 async function renderLabels(list){
   const holder=$('labelPages');
@@ -161,9 +176,10 @@ async function renderLabels(list){
     clean.slice(i,i+20).forEach(it=>{
       const d=document.createElement('div');
       d.className='label';
-      const code=String(it.code);
-      d.innerHTML=`<img class="qr" alt="QR ${esc(code)}" src="${qrImageSrc(code)}"><div class="text"><div class="code">${esc(code)}</div><div class="name">${esc(it.name)}</div><div class="loc">${esc(it.location)}</div></div>`;
+      const code=String(it.code||'').trim();
+      d.innerHTML=`<div class="qrBox"></div><div class="text"><div class="code">${esc(code)}</div><div class="name">${esc(it.name)}</div><div class="loc">${esc(it.location)}</div></div>`;
       grid.appendChild(d);
+      renderQrBox(d.querySelector('.qrBox'), code);
     });
     page.appendChild(grid);
     holder.appendChild(page);

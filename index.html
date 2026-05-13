@@ -89,9 +89,41 @@ const config=window.APP_CONFIG||{};
 function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function bomCsv(rows){return '\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n')}
 function download(name, blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-function loadSettings(){ $('appUrl').value=localStorage.appUrl||config.APP_URL||location.href.split('?')[0]; $('supabaseUrl').value=localStorage.supabaseUrl||config.SUPABASE_URL||''; $('supabaseKey').value=localStorage.supabaseKey||config.SUPABASE_ANON_KEY||''; $('checkerName').value=localStorage.checkerName||''; $('checkerNameScan').value=localStorage.checkerName||''; setupSupabase();}
+function normalizeAppUrlCandidate(v){
+  let raw=String(v||'').trim();
+  if(!raw) return '';
+  try{
+    const u=new URL(raw, location.href);
+    // GitHubの管理画面・リポジトリ画面を入れた場合はPagesのURLではないので使わない。
+    if(u.hostname==='github.com' || u.hostname.endsWith('.github.com')) return '';
+    u.hash='';
+    u.search='';
+    let out=u.toString();
+    if(!out.endsWith('/')) out+='/';
+    return out;
+  }catch(e){return ''}
+}
+function currentPageBase(){
+  const u=new URL(location.href);
+  u.hash='';
+  u.search='';
+  let out=u.toString();
+  if(!out.endsWith('/')) out=out.replace(/\/[^\/]*$/,'/');
+  return out;
+}
+function loadSettings(){
+  const saved=normalizeAppUrlCandidate(localStorage.appUrl);
+  const conf=normalizeAppUrlCandidate(config.APP_URL);
+  const current=currentPageBase();
+  // github.ioで実際に開いている場合は、間違って保存されたgithub.comのURLより現在の公開URLを優先。
+  $('appUrl').value=saved||conf||current;
+  $('supabaseUrl').value=localStorage.supabaseUrl||config.SUPABASE_URL||''; $('supabaseKey').value=localStorage.supabaseKey||config.SUPABASE_ANON_KEY||''; $('checkerName').value=localStorage.checkerName||''; $('checkerNameScan').value=localStorage.checkerName||''; setupSupabase();}
 function setupSupabase(){const url=$('supabaseUrl').value.trim(), key=$('supabaseKey').value.trim(); if(url&&key&&window.supabase){supabaseClient=window.supabase.createClient(url,key);$('modeBadge').textContent='Supabase共有モード'}else{supabaseClient=null;$('modeBadge').textContent='ブラウザ保存モード'}}
-$('saveSettings').onclick=()=>{localStorage.appUrl=$('appUrl').value.trim();localStorage.supabaseUrl=$('supabaseUrl').value.trim();localStorage.supabaseKey=$('supabaseKey').value.trim();localStorage.checkerName=$('checkerName').value.trim();$('checkerNameScan').value=$('checkerName').value.trim();setupSupabase();loadData();alert('保存しました')}
+$('saveSettings').onclick=()=>{
+  const normalized=normalizeAppUrlCandidate($('appUrl').value.trim());
+  if(!normalized){alert('公開URLがGitHubの管理画面URLになっています。https://ユーザー名.github.io/リポジトリ名/ の形式を入力してください。');return;}
+  $('appUrl').value=normalized;
+  localStorage.appUrl=normalized;localStorage.supabaseUrl=$('supabaseUrl').value.trim();localStorage.supabaseKey=$('supabaseKey').value.trim();localStorage.checkerName=$('checkerName').value.trim();$('checkerNameScan').value=$('checkerName').value.trim();setupSupabase();loadData();alert('保存しました')}
 function localLoad(){items=JSON.parse(localStorage.items||'[]');logs=JSON.parse(localStorage.logs||'[]')}
 function localSave(){localStorage.items=JSON.stringify(items);localStorage.logs=JSON.stringify(logs)}
 async function loadData(){setupSupabase(); if(supabaseClient){let {data:e,error}=await supabaseClient.from('items').select('*').order('code'); if(error) alert(error.message); items=e||[]; let r=await supabaseClient.from('check_logs').select('*').order('checked_at',{ascending:false}).limit(500); logs=r.data||[]}else localLoad(); render(); handleScanParam();}
@@ -121,21 +153,15 @@ $('exportLogsCsv').onclick=()=>download('check_logs_for_filemaker.csv',new Blob(
 $('exportItemsXlsx').onclick=()=>{const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(itemRows()),'items');XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(logRows()),'check_logs');XLSX.writeFile(wb,'物品台帳_履歴.xlsx')}
 $('clearLocal').onclick=()=>{if(confirm('ブラウザ内保存データを削除しますか？')){localStorage.removeItem('items');localStorage.removeItem('logs');loadData()}}
 function qrUrl(code){
-  // QRに入れるURLを物品ごとに必ず作り直す。
-  // 入力された公開URLに ?code=... が残っていても、毎回上書きする。
+  // QRに入れるのは必ず「GitHub Pagesの公開URL + 物品コード」。
+  // github.com のリポジトリ画面・Settings画面URLは誤入力として除外する。
   const codeText=String(code||'').trim();
-  let rawBase=($('appUrl').value.trim()||localStorage.appUrl||config.APP_URL||location.href.split('?')[0]).trim();
-  if(!rawBase) rawBase=location.href.split('?')[0];
-  let u;
-  try{
-    u=new URL(rawBase, location.href);
-  }catch(e){
-    u=new URL(location.href.split('?')[0]);
-  }
+  let base=normalizeAppUrlCandidate($('appUrl').value)||normalizeAppUrlCandidate(localStorage.appUrl)||normalizeAppUrlCandidate(config.APP_URL)||currentPageBase();
+  const u=new URL(base, location.href);
   u.hash='';
+  u.search='';
   u.searchParams.set('code', codeText);
-  // QRコード画像サービスやブラウザのキャッシュ混同対策。読み取り処理では無視される。
-  u.searchParams.set('item', codeText);
+  u.searchParams.set('item', codeText); // キャッシュ混同対策。読み取り処理ではcodeだけ使う。
   return u.toString();
 }
 function qrImageSrc(code){

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>物品QRチェック（v5・QR修正・20面ラベル改良）</title>
+<title>物品QRチェック（v6・QR個別生成修正版）</title>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -120,14 +120,33 @@ $('exportLogsCsv').onclick=()=>download('check_logs_for_filemaker.csv',new Blob(
 $('exportItemsXlsx').onclick=()=>{const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(itemRows()),'items');XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(logRows()),'check_logs');XLSX.writeFile(wb,'物品台帳_履歴.xlsx')}
 $('clearLocal').onclick=()=>{if(confirm('ブラウザ内保存データを削除しますか？')){localStorage.removeItem('items');localStorage.removeItem('logs');loadData()}}
 function qrUrl(code){
-  const rawBase=($('appUrl').value.trim()||location.href.split('?')[0]).trim();
-  const base=rawBase.replace(/[#?].*$/,'').replace(/\/+$/,'')+'/';
-  return base+'?code='+encodeURIComponent(String(code));
+  // QRに入れるURLを物品ごとに必ず作り直す。
+  // 入力された公開URLに ?code=... が残っていても、毎回上書きする。
+  const codeText=String(code||'').trim();
+  let rawBase=($('appUrl').value.trim()||localStorage.appUrl||config.APP_URL||location.href.split('?')[0]).trim();
+  if(!rawBase) rawBase=location.href.split('?')[0];
+  let u;
+  try{
+    u=new URL(rawBase, location.href);
+  }catch(e){
+    u=new URL(location.href.split('?')[0]);
+  }
+  u.hash='';
+  u.searchParams.set('code', codeText);
+  // QRコード画像サービスやブラウザのキャッシュ混同対策。読み取り処理では無視される。
+  u.searchParams.set('item', codeText);
+  return u.toString();
 }
 function qrImageSrc(code){
-  // dataに物品ごとのURLを必ず入れる。nocacheにもcodeを入れて、ブラウザ/印刷時の画像キャッシュ混同を防ぐ。
   const data=qrUrl(code);
-  return 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=6&data='+encodeURIComponent(data)+'&nocache='+encodeURIComponent(String(code));
+  const p=new URLSearchParams();
+  p.set('size','220x220');
+  p.set('margin','6');
+  p.set('format','svg');
+  p.set('data',data);
+  // 画像キャッシュで別物品が同じ画像になるのを避ける。
+  p.set('t',String(code)+'_'+Date.now()+'_'+Math.random().toString(36).slice(2));
+  return 'https://api.qrserver.com/v1/create-qr-code/?'+p.toString();
 }
 async function renderLabels(list){
   const holder=$('labelPages');
